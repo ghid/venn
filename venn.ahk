@@ -31,7 +31,9 @@ op_cb(pValue, no_opt = "") {
 main:
 	_main := new Logger("app.venn.main")
 
-	global G_h, G_a, G_i, G_l, G_t, G_u, G_op, G_b, G_v, G_k, G_output
+	global G_h, G_a, G_i, G_l, G_t, G_u, G_op, G_b, G_v, G_k, G_output, G_output_file
+
+	FileEncoding UTF-8
 
 	OP_NAME := ["'Intersection' A:( (*) ):B", "'Union' A:(*(*)*):B", "'Symmetric Difference' A:(*( )*):B", "'Relative Complement' A:(*( ) ):B"]
 
@@ -120,10 +122,12 @@ main:
 						Console.Write("Overwrting file " G_output "`n")
 				}
 			}
-			if (!G_k && G_output <> "" && FileExist(G_output)) {
-				if (G_v)
-					Console.Write("Deleting existing output file " G_output "`n")
-				FileDelete %G_output%
+			if (G_output <> "") {
+				if (G_k) {
+					G_output_file := FileOpen(G_output, "a")
+				} else {
+					G_output_file := FileOpen(G_output, "w")
+				}
 			}
 
 			RC := do_operation(G_op, _set_a, _set_b)
@@ -133,6 +137,9 @@ main:
 			_main.SEVERE("error: @" _ex.File "#" _ex.Line " : " _ex.Message)
 		Console.Write(_ex.Message "`n")
 		Console.write(op.Usage() "`n")
+	} finally {
+		if (G_output_file <> "")
+			G_output_file.Close()
 	}
 
 exitapp _main.Exit(RC)
@@ -145,7 +152,7 @@ load_file(ByRef target, file_name) {
 		_log.Input("file_name", file_name)
 	}
 
-	FileRead content, %file_name%
+	FileRead content, *P65001 %file_name%
 	sort_option := (G_i = true ? "" : "C")
 	if (_log.Logs(Logger.Finest)) {
 		_log.Finest("G_i", G_i)
@@ -182,22 +189,36 @@ do_operation(op, file_A, file_B) {
 
 	i_A := A.MinIndex()
 	i_B := B.MinIndex()
-	A.Insert(Chr(255))
-	B.Insert(Chr(255))
+	if (_log.Logs(Logger.Finest)) {
+		_log.Finest("i_A", i_A)
+		_log.Finest("i_B", i_B)
+		_log.Finest("A.MaxIndex()", A.MaxIndex())
+		_log.Finest("B.MaxIndex()", B.MaxIndex())
+	}
+
+	VarSetCapacity(HIGH, 4, 0xFF)
+	A.Insert(HIGH)
+	B.Insert(HIGH)
 	
 	n := 0
 	while (i_A < A.MaxIndex() || i_B < B.MaxIndex()) {
-		while (compare(A[i_A], B[i_B]) < 0 && i_A <= A.MaxIndex()) {
+		while (i_A < A.MaxIndex() && compare(A[i_A], B[i_B]) < 0) {
+			if (_log.Logs(Logger.Detail))
+				_log.Detail("A[" i_A "]:" A[i_A] " < B[" i_B "]:" B[i_B])
 			if (op = 2 || op = 3 || op = 4)
 				output(A[i_A], n)
 			i_A++
 		}
-		while (compare(B[i_B], A[i_A]) < 0 && i_B <= B.MaxIndex()) {
-			if (op = 2 || op = 3)
+		while (i_B < B.MaxIndex() && compare(B[i_B], A[i_A]) < 0) {
+			if (_log.Logs(Logger.Detail))
+				_log.Detail("B[" i_B "]:" B[i_B] " < A[" i_A "]:" A[i_A])
+			if (op = 2 || op = 3 || op = 4)
 				output(B[i_B], n)
 			i_B++
 		}
-		while (compare(A[i_A], B[i_B]) = 0 && (i_A <= A.MaxIndex() || i_B <= B.MaxIndex())) {
+		while ((i_A < A.MaxIndex() || i_B < B.MaxIndex()) && compare(A[i_A], B[i_B]) = 0) {
+			if (_log.Logs(Logger.Detail))
+				_log.Detail("A[" i_A "]:" A[i_A] " = B[" i_B "]:" B[i_B])
 			if (op = 1 || op = 2) {
 				output(A[i_A], n)
 				output(B[i_B], n)
@@ -219,12 +240,17 @@ output(pValue, ByRef count) {
 	}
 
 	static last_value = ""
+	if (_log.Logs(Logger.Finest)) {
+		_log.Finest("last_value", last_value)
+		_log.Finest("G_u", G_u)
+		_log.Finest("G_i", G_i)
+	}
 
-	if (pValue = Chr(255) || (G_u && pValue == last_value))
+	if (G_u && (G_i = true ? (pValue = last_value) : (pValue == _last_value)))
 		return
 
 	if (G_output <> "")
-		FileAppend %pValue% "`n", %G_output%
+		G_output_file.WriteLine(pValue)
 	else
 		Console.Write(pValue "`n")
 	last_value := pValue
