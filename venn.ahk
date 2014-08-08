@@ -31,9 +31,7 @@ op_cb(pValue, no_opt = "") {
 main:
 	_main := new Logger("app.venn.main")
 
-	global G_h, G_a, G_i, G_l, G_t, G_u, G_op, G_b, G_v, G_k, G_output, G_output_file
-
-	FileEncoding UTF-8
+	global G_h, G_a, G_i, G_l, G_t, G_u, G_op, G_b, G_v, G_k, G_output, G_output_file, G_enc_A, G_enc_B
 
 	OP_NAME := ["'Intersection' A:( (*) ):B", "'Union' A:(*(*)*):B", "'Symmetric Difference' A:(*( )*):B", "'Relative Complement' A:(*( ) ):B"]
 
@@ -49,8 +47,11 @@ main:
 	op.Add(new OptParser.Boolean("b", "ignore-blank-lines", G_b, "Ignore blank line (default)", OptParser.OPT_NEG, true))
 	op.Add(new OptParser.Boolean("u", "unique", G_u, "Only keep the first of multiple identical lines"))
 	op.Add(new OptParser.Boolean("v", "verbose", G_v, "Verbose output"))
-	op.Add(new OptParser.String("A", "", _set_a, "file", "File name to use as set A"), OptParser.OPT_ARG)
-	op.Add(new OptParser.String("B", "", _set_b, "file", "File name to use as set B"), OptParser.OPT_ARG)
+	op.Add(new OptParser.String(0, "enc-A", G_enc_A, "encoding", "Encoding of file A", OptParser.OPT_ARG))
+	op.Add(new OptParser.String(0, "enc-B", G_enc_B, "encoding", "Encoding fo file B", OptParser.OPT_ARG))
+	op.Add(new Optparser.Group("`nSets"))
+	op.Add(new OptParser.String("A", "", _set_a, "file", "File name to use as set A", OptParser.OPT_ARG))
+	op.Add(new OptParser.String("B", "", _set_b, "file", "File name to use as set B", OptParser.OPT_ARG))
 	op.Add(new OptParser.Group("`nOperations"))
 	op.Add(new OptParser.Callback(0, "operation", G_op, "op_cb", "operation"
 		, ["Select an operation to perform (the '*' represents the result set):"
@@ -122,13 +123,6 @@ main:
 						Console.Write("Overwrting file " G_output "`n")
 				}
 			}
-			if (G_output <> "") {
-				if (G_k) {
-					G_output_file := FileOpen(G_output, "a")
-				} else {
-					G_output_file := FileOpen(G_output, "w")
-				}
-			}
 
 			RC := do_operation(G_op, _set_a, _set_b)
 		}
@@ -137,30 +131,39 @@ main:
 			_main.SEVERE("error: @" _ex.File "#" _ex.Line " : " _ex.Message)
 		Console.Write(_ex.Message "`n")
 		Console.write(op.Usage() "`n")
-	} finally {
-		if (G_output_file <> "")
-			G_output_file.Close()
 	}
 
 exitapp _main.Exit(RC)
 
 
-load_file(ByRef target, file_name) {
+load_file(ByRef target, file_name, enc = "utf-8") {
 	_log := new Logger("app.venn." A_ThisFunc)
 
 	if (_log.Logs(Logger.Input)) {
 		_log.Input("file_name", file_name)
+		_log.Input("enc", enc)
 	}
 
-	FileRead content, *P65001 %file_name%
+	FileGetSize size, %file_name%
+	file := FileOpen(file_name, "r`n", enc)
+	if (_log.Logs(Logger.Finest)) {
+		_log.Finest("size", size)
+		_log.Finest("file", file)
+	}
+	content := file.Read(size)
+	if (_log.Logs(Logger.ALL))
+		_log.All("content:`n" LoggingHelper.HexDump(&content, 0, size * (A_IsUnicode ? 2 : 1)))
+	file.Close()
+
 	sort_option := (G_i = true ? "" : "C")
 	if (_log.Logs(Logger.Finest)) {
 		_log.Finest("G_i", G_i)
+		_log.Finest("G_b", G_b)
 		_log.Finest("sort_option = " sort_option)
 	}
 	Sort content, %sort_option%
 	target := []
-	loop Parse, content, "`n", % Chr(26)
+	loop Parse, content, % "`n", % Chr(26)
 	{
 		if (!G_b || A_LoopField.Trim() <> "")
 			target.Insert(A_LoopField)
@@ -184,8 +187,8 @@ do_operation(op, file_A, file_B) {
 		_log.Input("file_B", file_B)
 	}
 	
-	load_file(A, file_A)
-	load_file(B, file_B)
+	load_file(A, file_A, G_enc_A)
+	load_file(B, file_B, G_enc_B)
 
 	i_A := A.MinIndex()
 	i_B := B.MinIndex()
@@ -200,32 +203,45 @@ do_operation(op, file_A, file_B) {
 	A.Insert(HIGH)
 	B.Insert(HIGH)
 	
-	n := 0
-	while (i_A < A.MaxIndex() || i_B < B.MaxIndex()) {
-		while (i_A < A.MaxIndex() && compare(A[i_A], B[i_B]) < 0) {
-			if (_log.Logs(Logger.Detail))
-				_log.Detail("A[" i_A "]:" A[i_A] " < B[" i_B "]:" B[i_B])
-			if (op = 2 || op = 3 || op = 4)
-				output(A[i_A], n)
-			i_A++
-		}
-		while (i_B < B.MaxIndex() && compare(B[i_B], A[i_A]) < 0) {
-			if (_log.Logs(Logger.Detail))
-				_log.Detail("B[" i_B "]:" B[i_B] " < A[" i_A "]:" A[i_A])
-			if (op = 2 || op = 3 || op = 4)
-				output(B[i_B], n)
-			i_B++
-		}
-		while ((i_A < A.MaxIndex() || i_B < B.MaxIndex()) && compare(A[i_A], B[i_B]) = 0) {
-			if (_log.Logs(Logger.Detail))
-				_log.Detail("A[" i_A "]:" A[i_A] " = B[" i_B "]:" B[i_B])
-			if (op = 1 || op = 2) {
-				output(A[i_A], n)
-				output(B[i_B], n)
+	try {
+		if (G_output <> "") {
+			if (G_k) {
+				G_output_file := FileOpen(G_output, "a")
+			} else {
+				G_output_file := FileOpen(G_output, "w")
 			}
-			i_A++
-			i_B++
 		}
+
+		n := 0
+		while (i_A < A.MaxIndex() || i_B < B.MaxIndex()) {
+			while (i_A < A.MaxIndex() && compare(A[i_A], B[i_B]) < 0) {
+				if (_log.Logs(Logger.Detail))
+					_log.Detail("A[" i_A "]:" A[i_A] " < B[" i_B "]:" B[i_B])
+				if (op = 2 || op = 3 || op = 4)
+					output(A[i_A], n)
+				i_A++
+			}
+			while (i_B < B.MaxIndex() && compare(B[i_B], A[i_A]) < 0) {
+				if (_log.Logs(Logger.Detail))
+					_log.Detail("B[" i_B "]:" B[i_B] " < A[" i_A "]:" A[i_A])
+				if (op = 2 || op = 3)
+					output(B[i_B], n)
+				i_B++
+			}
+			while ((i_A < A.MaxIndex() || i_B < B.MaxIndex()) && compare(A[i_A], B[i_B]) = 0) {
+				if (_log.Logs(Logger.Detail))
+					_log.Detail("A[" i_A "]:" A[i_A] " = B[" i_B "]:" B[i_B])
+				if (op = 1 || op = 2) {
+					output(A[i_A], n)
+					output(B[i_B], n)
+				}
+				i_A++
+				i_B++
+			}
+		}
+	} finally {
+		if (G_output_file <> "")
+			G_output_file.Close()
 	}
 
 	return _log.Exit(n)
@@ -246,7 +262,7 @@ output(pValue, ByRef count) {
 		_log.Finest("G_i", G_i)
 	}
 
-	if (G_u && (G_i = true ? (pValue = last_value) : (pValue == _last_value)))
+	if (G_u && (G_i = true ? (pValue = last_value) : (pValue == last_value)))
 		return
 
 	if (G_output <> "")
