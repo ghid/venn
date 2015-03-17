@@ -182,11 +182,42 @@ class VennTest extends TestCase {
 		this.AssertEquals(res, 3)
 		this.AssertTrue(Arrays.Equal(load_file_into_array(VennTest.FILE_RES, "cp1252"), ["D", "e", "G"]))
 	}
+
+	@Test_Portal_Abrechnung() {
+		
+		if (FileExist(A_Temp "\blacklist.txt"))
+			FileDelete, % A_Temp "\blacklist.txt"
+		if (FileExist(A_Temp "\users.txt"))
+			FileDelete, % A_Temp "\users.txt"
+
+		FileAppend,
+			( LTrim
+				thac
+				scdd
+			), % A_Temp "\blacklist.txt"
+
+		FileAppend,
+			( LTrim
+				BChr
+				scdd
+				heap	
+				ScdD
+				thac
+				zahl
+			), % A_Temp "\users.txt"
+
+		global G_u := true
+		global G_i := true
+
+		res := do_operation(4, A_Temp "\users.txt", A_Temp "\blacklist.txt")
+		this.AssertEquals(res, 3)
+		this.AssertTrue(Arrays.Equal(load_file_into_array(VennTest.FILE_RES, "cp1252"), ["BChr", "heap", "zahl"]))
+	}
 }
 
 exitapp VennTest.RunTests()
 
-load_file_into_array(file_name, enc) {
+load_file_into_array(file_name, enc, dump = false) {
 	FileGetSize size, %file_name%
 	file := FileOpen(file_name, "r`n", enc)
 	content := file.Read(size)
@@ -196,6 +227,8 @@ load_file_into_array(file_name, enc) {
 	loop Parse, content, % "`n", % Chr(26)
 	{
 		target.Insert(A_LoopField)
+		if (dump)
+			OutputDebug %A_Index%: %A_LoopField%
 	}
 
 	target.Remove() ; Removes the last (blank) element

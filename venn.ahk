@@ -47,8 +47,8 @@ main:
 	op.Add(new OptParser.Boolean("b", "ignore-blank-lines", G_b, "Ignore blank line (default)", OptParser.OPT_NEG, true))
 	op.Add(new OptParser.Boolean("u", "unique", G_u, "Only keep the first of multiple identical lines"))
 	op.Add(new OptParser.Boolean("v", "verbose", G_v, "Verbose output"))
-	op.Add(new OptParser.String(0, "enc-A", G_enc_A, "encoding", "Encoding of file A", OptParser.OPT_ARG))
-	op.Add(new OptParser.String(0, "enc-B", G_enc_B, "encoding", "Encoding fo file B", OptParser.OPT_ARG))
+	op.Add(new OptParser.String(0, "enc-A", G_enc_A, "encoding", "Encoding of file A", OptParser.OPT_ARG,, "cp1252"))
+	op.Add(new OptParser.String(0, "enc-B", G_enc_B, "encoding", "Encoding fo file B", OptParser.OPT_ARG,, "cp1252"))
 	op.Add(new Optparser.Group("`nSets"))
 	op.Add(new OptParser.String("A", "", _set_a, "file", "File name to use as set A", OptParser.OPT_ARG))
 	op.Add(new OptParser.String("B", "", _set_b, "file", "File name to use as set B", OptParser.OPT_ARG))
@@ -79,6 +79,8 @@ main:
 			_main.Finest("G_op", G_op)
 			_main.Finest("G_output", G_output)
 			_main.Finest("G_k", G_k)
+			_main.Finest("G_enc_A", G_enc_A)
+			_main.Finest("G_enc_B", G_enc_B)
 		}
 		if (args.MinIndex() <> "")
 			throw Exception("error: Invalid argument(s): " Arrays.ToString(args, "; "))
@@ -113,8 +115,8 @@ main:
 					Console.Write("Ignoring blank lines`n")
 				if (G_u)
 					Console.Write("Printing no duplicates`n")
-				Console.Write("Set 'A' is " _set_a "`n")
-				Console.Write("Set 'B' is " _set_b "`n")
+				Console.Write("Set 'A' is " _set_a " with encoding " G_enc_A "`n")
+				Console.Write("Set 'B' is " _set_b " with encoding " G_enc_B "`n")
 				Console.Write("Performing operation " OP_NAME[G_op] "`n")
 				if (G_output.Trim() <> "") {
 					if (G_k)
@@ -236,7 +238,8 @@ do_operation(op, file_A, file_B) {
 					output(B[i_B], n)
 				}
 				i_A++
-				i_B++
+				if (op <> 4)
+					i_B++
 			}
 		}
 	} finally {
@@ -262,9 +265,16 @@ output(pValue, ByRef count) {
 		_log.Finest("G_i", G_i)
 	}
 
-	if (G_u && (G_i = true ? (pValue = last_value) : (pValue == last_value)))
+	if (G_u && (G_i = true ? (pValue = last_value) : (pValue == last_value))) {
+		if (_log.Logs(Logger.Detail)) {
+			_log.Detail("Discard value from result: " pValue)
+		}
 		return
+	}
 
+	if (_log.Logs(Logger.Detail)) {
+		_log.Detail("Add value to result: " pValue)
+	}
 	if (G_output <> "")
 		G_output_file.WriteLine(pValue)
 	else
@@ -285,7 +295,11 @@ compare(elem_A, elem_B) {
 		_log.Input("elem_A", elem_A)
 		_log.Input("elem_B", elem_B)
 	}
-
+	
+	if (_log.Logs(Logger.Finest)) {
+		_log.Finest("G_l", G_l)
+		_log.Finest("G_t", G_t)
+	}
 	if (G_l && G_t) {
 		elem_A := elem_A.Trim(String.TRIM_ALL)
 		elem_B := elem_B.Trim(String.TRIM_ALL)	
@@ -295,6 +309,10 @@ compare(elem_A, elem_B) {
 	} else if (G_t) {
 		elem_A := elem_A.Trim(String.TRIM_RIGHT)
 		elem_B := elem_B.Trim(String.TRIM_RIGHT)
+	}
+
+	if (_log.Logs(Logger.Finest)) {
+		_log.Finest("G_i", G_i)
 	}
 
 	return _log.Exit(elem_A.Compare(elem_B, (G_i = true ? false : true)))
