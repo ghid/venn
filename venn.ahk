@@ -6,6 +6,7 @@ SetBatchLines -1
 #Include <optparser>
 #Include <system>
 #Include <string>
+#Include *i %A_ScriptDir%\.versioninfo
 
 op_cb(pValue, no_opt = "") {
 	_log := new Logger("app.venn." A_ThisFunc)
@@ -31,7 +32,7 @@ op_cb(pValue, no_opt = "") {
 main:
 	_main := new Logger("app.venn.main")
 
-	global G_h, G_a, G_i, G_l, G_t, G_u, G_op, G_b, G_v, G_k, G_output, G_output_file, G_enc_A, G_enc_B
+	global G_h, G_a, G_i, G_l, G_t, G_u, G_op, G_b, G_v, G_k, G_output, G_output_file, G_enc_A, G_enc_B, G_version
 
 	OP_NAME := ["'Intersection' A:( (*) ):B", "'Union' A:(*(*)*):B", "'Symmetric Difference' A:(*( )*):B", "'Relative Complement' A:(*( ) ):B"]
 
@@ -47,6 +48,7 @@ main:
 	op.Add(new OptParser.Boolean("b", "ignore-blank-lines", G_b, "Ignore blank line (default)", OptParser.OPT_NEG, true))
 	op.Add(new OptParser.Boolean("u", "unique", G_u, "Only keep the first of multiple identical lines"))
 	op.Add(new OptParser.Boolean("v", "verbose", G_v, "Verbose output"))
+	op.Add(new OptParser.Boolean(0, "version", G_version, "Version info"))
 	op.Add(new OptParser.String(0, "enc-A", G_enc_A, "encoding", "Encoding of file A", OptParser.OPT_ARG,, "cp1252"))
 	op.Add(new OptParser.String(0, "enc-B", G_enc_B, "encoding", "Encoding fo file B", OptParser.OPT_ARG,, "cp1252"))
 	op.Add(new Optparser.Group("`nSets"))
@@ -74,6 +76,7 @@ main:
 			_main.Finest("G_b", G_b)
 			_main.Finest("G_u", G_u)
 			_main.Finest("G_v", G_v)
+			_main.Finest("G_version", G_version)
 			_main.Finest("_set_a", _set_a)
 			_main.Finest("_set_b", _set_b)
 			_main.Finest("G_op", G_op)
@@ -86,6 +89,9 @@ main:
 			throw Exception("error: Invalid argument(s): " Arrays.ToString(args, "; "))
 		if (G_h) {
 			Ansi.Write(op.Usage() "`n")
+		} else if (G_version) {
+			Ansi.WriteLine(G_VERSION_INFO.NAME "/" G_VERSION_INFO.ARCH "-b" G_VERSION_INFO.BUILD)
+			exitapp _main.Return()
 		} else {
 			if (!FileExist(_set_a))
 				throw Exception("error: Argument -A is an invalid file or missing")
