@@ -2,7 +2,7 @@
 SetBatchLines -1
 
 #Include <logging>
-#Include <console>
+#Include <ansi>
 #Include <optparser>
 #Include <system>
 #Include <string>
@@ -85,7 +85,7 @@ main:
 		if (args.MinIndex() <> "")
 			throw Exception("error: Invalid argument(s): " Arrays.ToString(args, "; "))
 		if (G_h) {
-			Console.Write(op.Usage() "`n")
+			Ansi.Write(op.Usage() "`n")
 		} else {
 			if (!FileExist(_set_a))
 				throw Exception("error: Argument -A is an invalid file or missing")
@@ -104,25 +104,25 @@ main:
 			G_output := G_output.Trim()
 			if (G_v) {
 				if (G_i = true)
-					Console.Write("Ignoring case`n")
+					Ansi.Write("Ignoring case`n")
 				else
-					Console.Write("Case sensitive`n")
+					Ansi.Write("Case sensitive`n")
 				if (G_l = true)
-					Console.Write("Ignoring leading spaces`n")
+					Ansi.Write("Ignoring leading spaces`n")
 				if (G_t = true)
-					Console.Write("Ignoring trailing spaces`n")
+					Ansi.Write("Ignoring trailing spaces`n")
 				if (G_b)
-					Console.Write("Ignoring blank lines`n")
+					Ansi.Write("Ignoring blank lines`n")
 				if (G_u)
-					Console.Write("Printing no duplicates`n")
-				Console.Write("Set 'A' is " _set_a " with encoding " G_enc_A "`n")
-				Console.Write("Set 'B' is " _set_b " with encoding " G_enc_B "`n")
-				Console.Write("Performing operation " OP_NAME[G_op] "`n")
+					Ansi.Write("Printing no duplicates`n")
+				Ansi.Write("Set 'A' is " _set_a " with encoding " G_enc_A "`n")
+				Ansi.Write("Set 'B' is " _set_b " with encoding " G_enc_B "`n")
+				Ansi.Write("Performing operation " OP_NAME[G_op] "`n")
 				if (G_output.Trim() <> "") {
 					if (G_k)
-						Console.Write("Appending to file " G_output "`n")
+						Ansi.Write("Appending to file " G_output "`n")
 					else
-						Console.Write("Overwrting file " G_output "`n")
+						Ansi.Write("Overwrting file " G_output "`n")
 				}
 			}
 
@@ -131,8 +131,8 @@ main:
 	} catch _ex {
 		if (_main.Logs(Logger.SEVERE))
 			_main.SEVERE("error: @" _ex.File "#" _ex.Line " : " _ex.Message)
-		Console.Write(_ex.Message "`n")
-		Console.write(op.Usage() "`n")
+		Ansi.Write(_ex.Message "`n")
+		Ansi.write(op.Usage() "`n")
 	}
 
 exitapp _main.Exit(RC)
@@ -278,7 +278,7 @@ output(pValue, ByRef count) {
 	if (G_output <> "")
 		G_output_file.WriteLine(pValue)
 	else
-		Console.Write(pValue "`n")
+		Ansi.Write(pValue "`n")
 	last_value := pValue
 	count++
 
