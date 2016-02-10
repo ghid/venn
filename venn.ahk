@@ -32,7 +32,7 @@ op_cb(pValue, no_opt = "") {
 main:
 	_main := new Logger("app.venn.main")
 
-	global G_h, G_a, G_i, G_l, G_t, G_u, G_op, G_b, G_v, G_k, G_output, G_output_file, G_enc_A, G_enc_B, G_version
+	global G_h, G_a, G_i, G_l, G_t, G_u, G_op, G_b, G_v, G_k, G_s, G_output, G_output_file, G_enc_A, G_enc_B, G_version
 
 	OP_NAME := ["'Intersection' A:( (*) ):B", "'Union' A:(*(*)*):B", "'Symmetric Difference' A:(*( )*):B", "'Relative Complement' A:(*( ) ):B"]
 
@@ -47,6 +47,7 @@ main:
 	op.Add(new OptParser.Boolean("t", "ignore-trailing-spaces", G_t, "Ignore trailing spaces", OptParser.OPT_NEG, -1))
 	op.Add(new OptParser.Boolean("b", "ignore-blank-lines", G_b, "Ignore blank line (default)", OptParser.OPT_NEG, true))
 	op.Add(new OptParser.Boolean("u", "unique", G_u, "Only keep the first of multiple identical lines"))
+	op.Add(new OptParser.Boolean("s", "source", G_s, "Print source (A/B) in results"))
 	op.Add(new OptParser.Boolean("v", "verbose", G_v, "Verbose output"))
 	op.Add(new OptParser.Boolean(0, "version", G_version, "Version info"))
 	op.Add(new OptParser.String(0, "enc-A", G_enc_A, "encoding", "Encoding of file A", OptParser.OPT_ARG,, "cp1252"))
@@ -75,6 +76,7 @@ main:
 			_main.Finest("G_t", G_t)
 			_main.Finest("G_b", G_b)
 			_main.Finest("G_u", G_u)
+			_main.Finest("G_s", G_s)
 			_main.Finest("G_v", G_v)
 			_main.Finest("G_version", G_version)
 			_main.Finest("_set_a", _set_a)
@@ -226,22 +228,22 @@ do_operation(op, file_A, file_B) {
 				if (_log.Logs(Logger.Detail))
 					_log.Detail("A[" i_A "]:" A[i_A] " < B[" i_B "]:" B[i_B])
 				if (op = 2 || op = 3 || op = 4)
-					output(A[i_A], n)
+					output(A[i_A], n, "A")
 				i_A++
 			}
 			while (i_B < B.MaxIndex() && compare(B[i_B], A[i_A]) < 0) {
 				if (_log.Logs(Logger.Detail))
 					_log.Detail("B[" i_B "]:" B[i_B] " < A[" i_A "]:" A[i_A])
 				if (op = 2 || op = 3)
-					output(B[i_B], n)
+					output(B[i_B], n, "B")
 				i_B++
 			}
 			while ((i_A < A.MaxIndex() || i_B < B.MaxIndex()) && compare(A[i_A], B[i_B]) = 0) {
 				if (_log.Logs(Logger.Detail))
 					_log.Detail("A[" i_A "]:" A[i_A] " = B[" i_B "]:" B[i_B])
 				if (op = 1 || op = 2) {
-					output(A[i_A], n)
-					output(B[i_B], n)
+					output(A[i_A], n, "A")
+					output(B[i_B], n, "B")
 				}
 				i_A++
 				if (op <> 4)
@@ -256,12 +258,13 @@ do_operation(op, file_A, file_B) {
 	return _log.Exit(n)
 }
 
-output(pValue, ByRef count) {
+output(pValue, ByRef count, source = "") {
 	_log := new Logger("app.venn." A_ThisFunc)
 
 	if (_log.Logs(Logger.Input)) {
 		_log.Input("pValue", pValue)
 		_log.Input("count", count)
+		_log.Input("source", source)
 	}
 
 	static last_value = ""
@@ -282,9 +285,9 @@ output(pValue, ByRef count) {
 		_log.Detail("Add value to result: " pValue)
 	}
 	if (G_output <> "")
-		G_output_file.WriteLine(pValue)
+		G_output_file.WriteLine((G_s ? "(" source ") " : "") pValue)
 	else
-		Ansi.Write(pValue "`n")
+		Ansi.Write((G_s ? "(" source ") " : "") pValue "`n")
 	last_value := pValue
 	count++
 

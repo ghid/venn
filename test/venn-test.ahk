@@ -68,6 +68,7 @@ class VennTest extends TestCase {
 		global G_t := false
 		global G_u := false
 		global G_b := true
+		global G_s := false
 		global G_v := false
 		global G_k := false
 		global G_enc_A := ""
@@ -115,6 +116,13 @@ class VennTest extends TestCase {
 		res := do_operation(1, VennTest.File_A, VennTest.FILE_B)
 		this.AssertEquals(res, 6)
 		this.AssertTrue(Arrays.Equal(load_file_into_array(VennTest.FILE_RES, "cp1252"), ["A", "A", "C", "C", "f", "f"]))
+	}
+
+	@Test_Intersection_With_Source() {
+		global G_s := true
+		res := do_operation(1, VennTest.File_A, VennTest.FILE_B)
+		this.AssertEquals(res, 6)
+		this.AssertTrue(Arrays.Equal(load_file_into_array(VennTest.FILE_RES, "cp1252"), ["(A) A", "(B) A", "(A) C", "(B) C", "(A) f", "(B) f"]))
 	}
 
 	@Test_Intersection_Unique() {
