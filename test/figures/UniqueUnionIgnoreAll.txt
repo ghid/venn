@@ -1,0 +1,17 @@
+Ignoring case
+Ignoring leading spaces
+Ignoring trailing spaces
+Ignoring blank lines
+Printing no duplicates
+Set 'A' is C:\Users\srp\AppData\Local\Temp\venn_A.txt with encoding cp1252
+Set 'B' is C:\Users\srp\AppData\Local\Temp\venn_B.txt with encoding cp1252
+Performing operation 'Union' A:(*(*)*):B
+A
+B
+C
+D
+e
+f
+G
+H
+i

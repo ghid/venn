@@ -1,0 +1,13 @@
+(A) A
+(B) A
+(A) B
+(A) C
+(B) C
+(B) D
+(B) G
+(A) H
+(B) I
+(B) e
+(A) f
+(B) f
+(A) i

@@ -1,0 +1,39 @@
+usage: venn [options] --operation=< is | un | sd | rc > -A <file> -B <file>
+
+General options
+    -a, --ignore-all      Ignore leading and trailing spaces; ignore case
+    -i, --ignore-case     Ignore case
+    -l, --ignore-leading-spaces
+                          Ignore leading spaces
+    -t, --ignore-trailing-spaces
+                          Ignore trailing spaces
+    -b, --ignore-blank-lines
+                          Ignore blank line (default)
+    -u, --unique          Only keep the first of multiple identical lines
+    -s, --source          Print source (A/B) in results
+    -v, --verbose         Verbose output
+    --version             Version info
+    --enc-A <encoding>    Encoding of file A
+    --enc-B <encoding>    Encoding fo file B
+
+Sets
+    -A <file>             File name to use as set A
+    -B <file>             File name to use as set B
+
+Operations
+    --operation <operation>
+                          Select an operation to perform (the '*' represents the
+                          result set):
+                          . is: 'Intersection' A:( (*) ):B
+                          . un: 'Union' A:(*(*)*):B
+                          . sd: 'Symmetric Difference' A:(*( )*):B
+                          . rc: 'Relative Complement' A:(*( ) ):B
+
+
+Output options
+    Output will be written to console by default
+
+    -o <file>             Write matching lines to file
+    --keep-file           Append to file instead of overwriting it
+
+
