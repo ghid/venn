@@ -2,7 +2,7 @@
 class Venn {
 
     requires() {
-        return [Ansi, OptParser, System, String]
+        return [Ansi, OptParser, System, String, Arrays]
     }
 
     static opts := Venn.setDefaults()
@@ -31,30 +31,67 @@ class Venn {
                 , t: -1
                 , u: false
                 , v: false
-                , version: false }
+                , version: false
+                , count: 0}
 
         Venn.opts := dv
     }
 
-    loadFile(ByRef target, file_name, enc="utf-8") {
-        FileGetSize size, %file_name%
-        file := FileOpen(file_name, "r`n", enc)
-        content := file.read(size)
-        file.close()
-        sort_option := (Venn.opts.i = true ? "" : "C")
-        Sort content, %sort_option%
+    loadFileIntoArray(fileName, encoding="utf-8") {
+        FileGetSize sizeOfInputFileInBytes, %fileName%
+        inputFile := FileOpen(fileName, "r`n", encoding)
+        contentOfInputFile := inputFile.read(sizeOfInputFileInBytes)
+        inputFile.close()
+        sortOption := (Venn.opts.i = true ? "" : "C")
+        Sort contentOfInputFile, %sortOption%
         target := []
-        loop Parse, content, % "`n", % Chr(26)  ; NOWARN
+        loop Parse, contentOfInputFile, % "`n", % Chr(26)  ; NOWARN
         {
             if (!Venn.opts.b || A_LoopField.trimAll() != "") {
-                target.insert(A_LoopField)
+                target.push(A_LoopField)
+            }
+        }
+        return target
+    }
+
+    doOperation(op, fileA, fileB, compareAsType=0) {
+        Venn.handleIgnoreAll()
+        A := Venn.loadFileIntoArray(fileA, Venn.opts.enc_A)
+        B := Venn.loadFileIntoArray(fileB, Venn.opts.enc_B)
+        try {
+            VennData.includeSource := Venn.opts.s
+            Venn.handleOutput()
+            resultSet := Arrays.venn(A, B, op, Venn.handleIgnoreCase())
+            while (A_Index <= resultSet.maxIndex()) {
+                count := Venn.output(resultSet[A_Index])
+            }
+        } finally {
+            if (Venn.opts.output_file != "") {
+                Venn.opts.output_file.close()
+            }
+        }
+        return count
+    }
+
+    handleOutput() {
+        if (Venn.opts.output != "") {
+            if (Venn.opts.k) {
+                Venn.opts.output_file := FileOpen(Venn.opts.output, "a")
+            } else {
+                Venn.opts.output_file := FileOpen(Venn.opts.output, "w")
             }
         }
     }
 
-    ; TODO: Refactor!
-    doOperation(op, file_A, file_B) {
-        ; Handle --ignore-all option
+    handleIgnoreCase() {
+        if (Venn.opts.i == true) {
+            return String.COMPARE_AS_STRING
+        } else {
+            return String.COMPARE_AS_CASE_SENSITIVE_STRING
+        }
+    }
+
+    handleIgnoreAll() {
         if (Venn.opts.a) {
             if (Venn.opts.i != 0) {
                 Venn.opts.i := true
@@ -66,99 +103,24 @@ class Venn {
                 Venn.opts.t := true
             }
         }
-
-        Venn.loadFile(A, file_A, Venn.opts.enc_A)
-        Venn.loadFile(B, file_B, Venn.opts.enc_B)
-
-        i_A := A.minIndex()
-        i_B := B.minIndex()
-
-        VarSetCapacity(HIGH, 4, 0xFF)
-        A.push(HIGH)
-        B.push(HIGH)
-
-        try {
-            if (Venn.opts.output != "") {
-                if (Venn.opts.k) {
-                    Venn.opts.output_file := FileOpen(Venn.opts.output, "a")
-                } else {
-                    Venn.opts.output_file := FileOpen(Venn.opts.output, "w")
-                }
-            }
-
-            n := 0
-            while (i_A < A.maxIndex() || i_B < B.maxIndex()) {
-                while (i_A < A.maxIndex() && Venn.compare(A[i_A], B[i_B]) < 0) {
-                    if (op = 2 || op = 3 || op = 4) {
-                        Venn.output(A[i_A], n, "A")
-                    }
-                    i_A++
-                }
-                while (i_B < B.maxIndex() && Venn.compare(B[i_B], A[i_A]) < 0) {
-                    if (op = 2 || op = 3) {
-                        Venn.output(B[i_B], n, "B")
-                    }
-                    i_B++
-                }
-                while ((i_A < A.maxIndex() || i_B < B.maxIndex())
-                        && Venn.compare(A[i_A], B[i_B]) = 0) {
-                    if (op = 1 || op = 2) {
-                        Venn.output(A[i_A], n, "A")
-                        Venn.output(B[i_B], n, "B")
-                    }
-                    i_A++
-                    if (op != 4) {
-                        i_B++
-                    }
-                }
-            }
-        } finally {
-            if (Venn.opts.output_file != "") {
-                Venn.opts.output_file.close()
-            }
-        }
-
-        return n
     }
 
-    output(pValue, ByRef count, source="") {
-
+    output(value) {
         static last_value = ""
 
-
         if (Venn.opts.u && (Venn.opts.i = true
-                ? (pValue = last_value)
-                : (pValue == last_value))) {
-            return
-        }
-
-        if (Venn.opts.output != "") {
-            Venn.opts.output_file.writeLine((Venn.opts.s
-                    ? "(" source ") "
-                    : "") pValue)
+                ? (value = last_value)
+                : (value == last_value))) {
         } else {
-            Ansi.write((Venn.opts.s ? "(" source ") " : "") pValue "`n")
+            if (Venn.opts.output != "") {
+                Venn.opts.output_file.writeLine(value)
+            } else {
+                Ansi.write(value "`n")
+            }
+            last_value := value
+            Venn.opts.count++
         }
-        last_value := pValue
-        count++
-    }
-
-    compare(elem_A, elem_B) {
-        if (Venn.opts.l = true && Venn.opts.t = true) {
-            elem_A := elem_A.trimAll()
-            elem_B := elem_B.trimAll()
-        } else if (Venn.opts.l = true) {
-            elem_A := elem_A.trimLeft()
-            elem_B := elem_B.trimLeft()
-        } else if (Venn.opts.t = true) {
-            elem_A := elem_A.trimRight()
-            elem_B := elem_B.trimRight()
-        }
-
-
-        return elem_A.compare(elem_B, (Venn.opts.i = true
-                ? String.COMPARE_AS_STRING
-                : String.COMPARE_AS_CASE_SENSITIVE_STRING))
+        return Venn.opts.count
     }
 
     ; TODO: Refactor!
@@ -227,8 +189,7 @@ class Venn {
 
     run(args) {
         Venn.setDefaults()
-        RC := 0
-
+        returnCode := 0
         try {
             op := Venn.cli()
             args := op.parse(args)
@@ -239,13 +200,10 @@ class Venn {
             if (Venn.opts.h) {
                 Ansi.writeLine(op.usage())
             } else if (Venn.opts.version) {
-                G_VERSION_INFO := { NAME: "AHK venn version v0.0.0"
-                        , ARCH: "x" (A_PtrSize = 4 ? "86" : "64")
-                        , BUILD: A_YYYY A_MM A_DD A_Hour A_Min }
-                #Include *i %A_ScriptDir%\.versioninfo
+                global G_VERSION_INFO
                 Ansi.writeLine(G_VERSION_INFO.NAME
                         . "/" G_VERSION_INFO.ARCH
-                        . "-b" G_VERSION_INFO.BUILD)
+                        . "-" G_VERSION_INFO.BUILD)
             } else {
                 if (!FileExist(Venn.opts.set_A)) {
                     throw Exception("error: Argument -A is an invalid file "
@@ -290,42 +248,46 @@ class Venn {
                         }
                     }
                 }
-
-                RC := Venn.doOperation(Venn.opts.op
+                VennData.includeSource := Venn.opts.s
+                returnCode := Venn.doOperation(Venn.opts.op
                         , Venn.opts.set_A, Venn.opts.set_B)
             }
         } catch _ex {
             Ansi.write(_ex.message "`n")
             Ansi.write(op.usage() "`n")
         }
-
-        return RC
+        return returnCode
     }
 }
 
-operation_cb(pValue, no_opt="") {
-    if (pValue = "is") {
+operation_cb(operation, noOption="") {
+    if (operation = "is") {
         return 1
-    } else if (pValue = "un") {
+    } else if (operation = "un") {
         return 2
-    } else if (pValue = "sd") {
+    } else if (operation = "sd") {
         return 3
-    } else if (pValue = "rc") {
+    } else if (operation = "rc") {
         return 4
     } else {
-        throw Exception("Invalid operation: " pValue)
+        throw Exception("Invalid operation: " operation)
     }
 }
 
-#NoEnv                                              ; NOTEST-BEGIN
+#NoEnv ; notest-begin
 SetBatchLines -1
 
-#Include <ansi\ansi>
-#Include <optparser\optparser>
-#Include <system\system>
-#Include <string\string>
+#Include <app>
+#Include <ansi>
+#Include <console>
+#Include <math>
+#Include <arrays>
+#Include <optparser>
+#Include <object>
+#Include <system>
+#Include <string>
+#Include *i %A_ScriptDir%\.versioninfo
 
 main:
-    _main := new Logger("app.venn.main")
-exitapp _main.exit(Venn.run(System.vArgs))        ; NOTEST-END
-; vim:tw=0:ts=4:sts=4:sw=4:et:ft=autohotkey:nobomb
+    App.checkRequiredClasses(Venn)
+exitapp Venn.run(A_Args) ; notest-end
