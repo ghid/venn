@@ -83,13 +83,13 @@ class VennTest extends TestCase {
 	}
 
 	@Test_load_file_A() {
-		Venn.loadFile(A, "C:\Users\srp\AppData\Local\Temp\venn_A.txt")
+		A := Venn.loadFileIntoArray(A_Temp "\venn_A.txt")
 		this.assertEquals(A.maxIndex(), 6)
 		this.assertTrue(Arrays.equal(A, ["A", "B", "C", "H", "f", "i"]))
 	}
 
 	@Test_load_file_B() {
-		Venn.loadFile(B, "C:\Users\srp\AppData\Local\Temp\venn_B.txt")
+		B := Venn.loadFileIntoArray(A_Temp "\venn_B.txt")
 		this.assertEquals(B.maxIndex(), 7)
 		this.assertTrue(Arrays.equal(B, ["A", "C", "D", "G", "I", "e", "f"]))
 	}
@@ -131,7 +131,7 @@ class VennTest extends TestCase {
 	}
 
 	@Test_Intersection() {
-		res := Venn.doOperation(1, VennTest.file_A, VennTest.FILE_B)
+		res := Venn.doOperation(1, VennTest.FILE_A, VennTest.FILE_B)
 		this.assertEquals(res, 6)
 		this.assertTrue(Arrays.equal(load_file_into_array(VennTest.FILE_RES
 				, "cp1252")
@@ -140,7 +140,7 @@ class VennTest extends TestCase {
 
 	@Test_Intersection_With_Source() {
 		Venn.opts.s := true
-		res := Venn.doOperation(1, VennTest.file_A, VennTest.FILE_B)
+		res := Venn.doOperation(1, VennTest.FILE_A, VennTest.FILE_B)
 		this.assertEquals(res, 6)
 		this.assertTrue(Arrays.equal(load_file_into_array(VennTest.FILE_RES
 				, "cp1252")
@@ -149,7 +149,7 @@ class VennTest extends TestCase {
 
 	@Test_Intersection_Unique() {
 		Venn.opts.u := true
-		res := Venn.doOperation(1, VennTest.file_A, VennTest.FILE_B)
+		res := Venn.doOperation(1, VennTest.FILE_A, VennTest.FILE_B)
 		this.assertEquals(res, 3)
 		this.assertTrue(Arrays.equal(load_file_into_array(VennTest.FILE_RES
 				, "cp1252"), ["A", "C", "f"]))
@@ -158,7 +158,9 @@ class VennTest extends TestCase {
 	@Test_Intersection_Unique_Ignore_Case() {
 		Venn.opts.u := true
 		Venn.opts.i := true
-		res := Venn.doOperation(1, VennTest.file_A, VennTest.FILE_B)
+		res := Venn.doOperation(1, VennTest.FILE_A, VennTest.FILE_B
+				, String.COMPARE_AS_STRING)
+		OutputDebug % LoggingHelper.dump(res)
 		this.assertEquals(res, 4)
 		this.assertTrue(Arrays.equal(load_file_into_array(VennTest.FILE_RES
 				, "cp1252"), ["A", "C", "f", "i"]))
@@ -188,36 +190,48 @@ class VennTest extends TestCase {
 				, "cp1252"), ["B", "D", "e", "G", "H"]))
 	}
 
-	@Test_Rel_Comp() {
+	@Test_Rel_CompAB() {
 		res := Venn.doOperation(4, VennTest.FILE_A, VennTest.FILE_B)
 		this.assertEquals(res, 3)
 		this.assertTrue(Arrays.equal(load_file_into_array(VennTest.FILE_RES
 				, "cp1252"), ["B", "H", "i"]))
+	}
+
+	@Test_Rel_CompBA() {
 		res := Venn.doOperation(4, VennTest.FILE_B, VennTest.FILE_A)
 		this.assertEquals(res, 4)
 		this.assertTrue(Arrays.equal(load_file_into_array(VennTest.FILE_RES
 				, "cp1252"), ["D", "G", "I", "e"]))
 	}
 
-	@Test_Rel_Comp_Unique() {
+	@Test_Rel_Comp_UniqueAB() {
 		Venn.opts.u := true
 		res := Venn.doOperation(4, VennTest.FILE_A, VennTest.FILE_B)
 		this.assertEquals(res, 3)
 		this.assertTrue(Arrays.equal(load_file_into_array(VennTest.FILE_RES
 				, "cp1252"), ["B", "H", "i"]))
+	}
+
+	@Test_Rel_Comp_UniqueBA() {
+		Venn.opts.u := true
 		res := Venn.doOperation(4, VennTest.FILE_B, VennTest.FILE_A)
 		this.assertEquals(res, 4)
 		this.assertTrue(Arrays.equal(load_file_into_array(VennTest.FILE_RES
 				, "cp1252"), ["D", "G", "I", "e"]))
 	}
 
-	@Test_Rel_Comp_Unique_Ignore_Case() {
+	@Test_Rel_Comp_Unique_Ignore_CaseAB() {
 		Venn.opts.u := true
 		Venn.opts.i := true
 		res := Venn.doOperation(4, VennTest.FILE_A, VennTest.FILE_B)
 		this.assertEquals(res, 2)
 		this.assertTrue(Arrays.equal(load_file_into_array(VennTest.FILE_RES
 				, "cp1252"), ["B", "H"]))
+	}
+
+	@Test_Rel_Comp_Unique_Ignore_CaseBA() {
+		Venn.opts.u := true
+		Venn.opts.i := true
 		res := Venn.doOperation(4, VennTest.FILE_B, VennTest.FILE_A)
 		this.assertEquals(res, 3)
 		this.assertTrue(Arrays.equal(load_file_into_array(VennTest.FILE_RES
@@ -403,7 +417,7 @@ load_file_into_array(fileName, encoding, dump=false) {
 	{
 		target.push(A_LoopField)
 		if (dump) {
-			OutputDebug %A_Index%: %A_LoopField%
+			OutputDebug %A_ThisFunc%: %A_Index%: %A_LoopField%
 		}
 	}
 	target.remove() ; Removes the last (blank) element
