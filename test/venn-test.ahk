@@ -112,7 +112,7 @@ class VennTest extends TestCase {
 	}
 
 	@Test_Union_Unique() {
-		Venn.opts.u := true
+		Venn.opts.unique := true
 		res := Venn.doOperation(2, VennTest.FILE_A, VennTest.FILE_B)
 		this.assertEquals(res, 10)
 		this.assertTrue(Arrays.equal(load_file_into_array(VennTest.FILE_RES
@@ -121,8 +121,8 @@ class VennTest extends TestCase {
 	}
 
 	@Test_Union_Unique_Ingnore_Case() {
-		Venn.opts.u := true
-		Venn.opts.i := true
+		Venn.opts.unique := true
+		Venn.opts.ignoreCase := true
 		res := Venn.doOperation(2, VennTest.FILE_A, VennTest.FILE_B)
 		this.assertEquals(res, 9)
 		this.assertTrue(Arrays.equal(load_file_into_array(VennTest.FILE_RES
@@ -139,7 +139,7 @@ class VennTest extends TestCase {
 	}
 
 	@Test_Intersection_With_Source() {
-		Venn.opts.s := true
+		Venn.opts.printSource := true
 		res := Venn.doOperation(1, VennTest.FILE_A, VennTest.FILE_B)
 		this.assertEquals(res, 6)
 		this.assertTrue(Arrays.equal(load_file_into_array(VennTest.FILE_RES
@@ -148,7 +148,7 @@ class VennTest extends TestCase {
 	}
 
 	@Test_Intersection_Unique() {
-		Venn.opts.u := true
+		Venn.opts.unique := true
 		res := Venn.doOperation(1, VennTest.FILE_A, VennTest.FILE_B)
 		this.assertEquals(res, 3)
 		this.assertTrue(Arrays.equal(load_file_into_array(VennTest.FILE_RES
@@ -156,8 +156,8 @@ class VennTest extends TestCase {
 	}
 
 	@Test_Intersection_Unique_Ignore_Case() {
-		Venn.opts.u := true
-		Venn.opts.i := true
+		Venn.opts.unique := true
+		Venn.opts.ignoreCase := true
 		res := Venn.doOperation(1, VennTest.FILE_A, VennTest.FILE_B
 				, String.COMPARE_AS_STRING)
 		OutputDebug % LoggingHelper.dump(res)
@@ -174,7 +174,7 @@ class VennTest extends TestCase {
 	}
 
 	@Test_Sym_Diff_Unique() {
-		Venn.opts.u := true
+		Venn.opts.unique := true
 		res := Venn.doOperation(3, VennTest.FILE_A, VennTest.FILE_B)
 		this.assertEquals(res, 7)
 		this.assertTrue(Arrays.equal(load_file_into_array(VennTest.FILE_RES
@@ -182,8 +182,8 @@ class VennTest extends TestCase {
 	}
 
 	@Test_Sym_Diff_Unique_Ignore_Case() {
-		Venn.opts.u := true
-		Venn.opts.i := true
+		Venn.opts.unique := true
+		Venn.opts.ignoreCase := true
 		res := Venn.doOperation(3, VennTest.FILE_A, VennTest.FILE_B)
 		this.assertEquals(res, 5)
 		this.assertTrue(Arrays.equal(load_file_into_array(VennTest.FILE_RES
@@ -205,7 +205,7 @@ class VennTest extends TestCase {
 	}
 
 	@Test_Rel_Comp_UniqueAB() {
-		Venn.opts.u := true
+		Venn.opts.unique := true
 		res := Venn.doOperation(4, VennTest.FILE_A, VennTest.FILE_B)
 		this.assertEquals(res, 3)
 		this.assertTrue(Arrays.equal(load_file_into_array(VennTest.FILE_RES
@@ -213,7 +213,7 @@ class VennTest extends TestCase {
 	}
 
 	@Test_Rel_Comp_UniqueBA() {
-		Venn.opts.u := true
+		Venn.opts.unique := true
 		res := Venn.doOperation(4, VennTest.FILE_B, VennTest.FILE_A)
 		this.assertEquals(res, 4)
 		this.assertTrue(Arrays.equal(load_file_into_array(VennTest.FILE_RES
@@ -221,8 +221,8 @@ class VennTest extends TestCase {
 	}
 
 	@Test_Rel_Comp_Unique_Ignore_CaseAB() {
-		Venn.opts.u := true
-		Venn.opts.i := true
+		Venn.opts.unique := true
+		Venn.opts.ignoreCase := true
 		res := Venn.doOperation(4, VennTest.FILE_A, VennTest.FILE_B)
 		this.assertEquals(res, 2)
 		this.assertTrue(Arrays.equal(load_file_into_array(VennTest.FILE_RES
@@ -230,8 +230,8 @@ class VennTest extends TestCase {
 	}
 
 	@Test_Rel_Comp_Unique_Ignore_CaseBA() {
-		Venn.opts.u := true
-		Venn.opts.i := true
+		Venn.opts.unique := true
+		Venn.opts.ignoreCase := true
 		res := Venn.doOperation(4, VennTest.FILE_B, VennTest.FILE_A)
 		this.assertEquals(res, 3)
 		this.assertTrue(Arrays.equal(load_file_into_array(VennTest.FILE_RES
@@ -259,8 +259,8 @@ class VennTest extends TestCase {
 				ThaC
 				zahl
 			), % A_Temp "\users.txt"
-		Venn.opts.u := true
-		Venn.opts.a := true
+		Venn.opts.unique := true
+		Venn.opts.ignoreAll := true
 		res := Venn.doOperation(4, A_Temp "\users.txt", A_Temp "\blacklist.txt")
 		this.assertEquals(res, 3)
 		this.assertTrue(Arrays.equal(load_file_into_array(VennTest.FILE_RES
@@ -288,8 +288,8 @@ class VennTest extends TestCase {
 				ThaC
 				zahl
 			), % A_Temp "\users.txt"
-		Venn.opts.u := true
-		Venn.opts.a := true
+		Venn.opts.unique := true
+		Venn.opts.ignoreAll := true
 		Venn.opts.compare_at := 2
 		res := Venn.doOperation(4, A_Temp "\users.txt", A_Temp "\blacklist.txt")
 		this.assertEquals(res, 3)
