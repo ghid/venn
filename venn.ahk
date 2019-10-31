@@ -36,6 +36,42 @@ class Venn {
 		Venn.opts := dv
 	}
 
+	doOperation(operation, fileA, fileB, compareAsType=0) {
+		Venn.handleIgnoreAll()
+		A := Venn.loadFileIntoArray(fileA, Venn.opts.encodingOfFileA)
+		B := Venn.loadFileIntoArray(fileB, Venn.opts.encodingOfFileB)
+		try {
+			Venn.handleOutput()
+			switch operation {
+			case 1:
+				resultSet := new Arrays.Intersection(A, B
+						, Venn.handleIgnoreCase(), Venn.opts.printSource)
+						.result()
+			case 2:
+				resultSet := new Arrays.Union(A, B
+						, Venn.handleIgnoreCase(), Venn.opts.printSource)
+						.result()
+			case 3:
+				resultSet := new Arrays.SymmetricDifference(A, B
+						, Venn.handleIgnoreCase(), Venn.opts.printSource)
+						.result()
+			case 4:
+				resultSet := new Arrays.RelativeComplement(A, B
+						, Venn.handleIgnoreCase(), Venn.opts.printSource)
+						.result()
+			}
+			count := 0
+			while (A_Index <= resultSet.maxIndex()) {
+				count := Venn.output(resultSet[A_Index])
+			}
+		} finally {
+			if (Venn.opts.output_file != "") {
+				Venn.opts.output_file.close()
+			}
+		}
+		return count
+	}
+
 	loadFileIntoArray(fileName, encoding="utf-8") {
 		FileGetSize sizeOfInputFileInBytes, %fileName%
 		inputFile := FileOpen(fileName, "r`n", encoding)
@@ -53,23 +89,12 @@ class Venn {
 		return target
 	}
 
-	doOperation(operation, fileA, fileB, compareAsType=0) {
-		Venn.handleIgnoreAll()
-		A := Venn.loadFileIntoArray(fileA, Venn.opts.encodingOfFileA)
-		B := Venn.loadFileIntoArray(fileB, Venn.opts.encodingOfFileB)
-		try {
-			VennData.printSource := Venn.opts.printSource
-			Venn.handleOutput()
-			resultSet := Arrays.venn(A, B, operation, Venn.handleIgnoreCase())
-			while (A_Index <= resultSet.maxIndex()) {
-				count := Venn.output(resultSet[A_Index])
-			}
-		} finally {
-			if (Venn.opts.output_file != "") {
-				Venn.opts.output_file.close()
-			}
-		}
-		return count
+	compareIgnoreCase(aString, anotherString) {
+		aString := Format("{:U}", aString) "$"
+		anotherString := Format("{:U}", anotherString) "$"
+		return (aString == anotherString ? 0
+				: aString > anotherString ? +1
+				: -1)
 	}
 
 	handleOutput() {
@@ -84,10 +109,9 @@ class Venn {
 
 	handleIgnoreCase() {
 		if (Venn.opts.ignoreCase == true) {
-			return String.COMPARE_AS_STRING
-		} else {
-			return String.COMPARE_AS_CASE_SENSITIVE_STRING
+			return Venn.compareIgnoreCase.bind(Venn)
 		}
+		return ""
 	}
 
 	handleIgnoreAll() {
@@ -104,19 +128,18 @@ class Venn {
 		}
 	}
 
-	output(value) {
-		static last_value = ""
-
+	output(currentValue) {
+		static previousValue = ""
 		if (Venn.opts.unique && (Venn.opts.ignoreCase = true
-				? (value = last_value)
-				: (value == last_value))) {
+				? (currentValue = previousValue)
+				: (currentValue == previousValue))) {
 		} else {
 			if (Venn.opts.output != "") {
-				Venn.opts.output_file.writeLine(value)
+				Venn.opts.output_file.writeLine(currentValue)
 			} else {
-				Ansi.write(value "`n")
+				Ansi.writeLine(currentValue)
 			}
-			last_value := value
+			previousValue := currentValue
 			Venn.opts.count++
 		}
 		return Venn.opts.count
@@ -255,7 +278,6 @@ class Venn {
 						}
 					}
 				}
-				VennData.printSource := Venn.opts.printSource
 				returnCode := Venn.doOperation(Venn.opts.operation
 						, Venn.opts.setA, Venn.opts.setB)
 			}
@@ -294,6 +316,4 @@ SetBatchLines -1
 #Include <system>
 #Include <string>
 
-main:
-	App.checkRequiredClasses(Venn)
-exitapp Venn.run(A_Args) ; notest-end
+exitapp App.checkRequiredClasses(Venn).run(A_Args) ; notest-end

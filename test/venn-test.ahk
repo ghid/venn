@@ -4,6 +4,7 @@
 SetBatchLines -1
 
 #Include <testcase-libs>
+#Include <app>
 
 class VennTest extends TestCase {
 
@@ -16,7 +17,7 @@ class VennTest extends TestCase {
 	static FILE_RES := A_Temp "\venn_result.txt"
 	static FILE_CON := A_Temp "\venn_test.txt"
 
-	@BeforeClass_Setup() {
+	@BeforeClass_setup() {
 		if (FileExist(VennTest.FILE_A)) {
 			FileDelete, % VennTest.FILE_A
 		}
@@ -50,7 +51,7 @@ class VennTest extends TestCase {
 		}
 	}
 
-	@AfterClass_Teardown() {
+	@AfterClass_teardown() {
 		if (FileExist(VennTest.FILE_A)) {
 			FileDelete, % VennTest.FILE_A
 		}
@@ -62,13 +63,13 @@ class VennTest extends TestCase {
 		}
 	}
 
-	@Before_Setup() {
+	@Before_setup() {
         Venn.setDefaults()
 		Venn.opts.output := VennTest.FILE_RES
 		Venn.opts.output_file := FileOpen(Venn.opts.output, "w")
 	}
 
-	@After_Teardown() {
+	@After_teardown() {
 		Venn.opts.close()
 	}
 
@@ -82,19 +83,19 @@ class VennTest extends TestCase {
 		FileDelete, % VennTest.FILE_CON
 	}
 
-	@Test_load_file_A() {
+	@Test_loadFileA() {
 		A := Venn.loadFileIntoArray(A_Temp "\venn_A.txt")
 		this.assertEquals(A.maxIndex(), 6)
 		this.assertTrue(Arrays.equal(A, ["A", "B", "C", "H", "f", "i"]))
 	}
 
-	@Test_load_file_B() {
+	@Test_loadFileB() {
 		B := Venn.loadFileIntoArray(A_Temp "\venn_B.txt")
 		this.assertEquals(B.maxIndex(), 7)
 		this.assertTrue(Arrays.equal(B, ["A", "C", "D", "G", "I", "e", "f"]))
 	}
 
-    @Test_Op_Callback() {
+    @Test_opCallback() {
         this.assertEquals(operation_cb("is"), 1)
         this.assertEquals(operation_cb("un"), 2)
         this.assertEquals(operation_cb("sd"), 3)
@@ -102,7 +103,7 @@ class VennTest extends TestCase {
         this.assertException("", "operation_cb", "", "", "xx")
     }
 
-	@Test_Union() {
+	@Test_union() {
 		res := Venn.doOperation(2, VennTest.FILE_A, VennTest.FILE_B)
 		this.assertEquals(res, 13)
 		this.assertTrue(Arrays.equal(load_file_into_array(VennTest.FILE_RES
@@ -111,7 +112,7 @@ class VennTest extends TestCase {
 				, "H", "I", "e", "f", "f", "i"]))
 	}
 
-	@Test_Union_Unique() {
+	@Test_unionUnique() {
 		Venn.opts.unique := true
 		res := Venn.doOperation(2, VennTest.FILE_A, VennTest.FILE_B)
 		this.assertEquals(res, 10)
@@ -120,7 +121,7 @@ class VennTest extends TestCase {
 				, ["A", "B", "C", "D", "G", "H", "I", "e", "f", "i"]))
 	}
 
-	@Test_Union_Unique_Ingnore_Case() {
+	@Test_unionUniqueIgnoreCase() {
 		Venn.opts.unique := true
 		Venn.opts.ignoreCase := true
 		res := Venn.doOperation(2, VennTest.FILE_A, VennTest.FILE_B)
@@ -130,7 +131,7 @@ class VennTest extends TestCase {
 				, ["A", "B", "C", "D", "e", "f", "G", "H", "i"]))
 	}
 
-	@Test_Intersection() {
+	@Test_intersection() {
 		res := Venn.doOperation(1, VennTest.FILE_A, VennTest.FILE_B)
 		this.assertEquals(res, 6)
 		this.assertTrue(Arrays.equal(load_file_into_array(VennTest.FILE_RES
@@ -138,7 +139,7 @@ class VennTest extends TestCase {
 				, ["A", "A", "C", "C", "f", "f"]))
 	}
 
-	@Test_Intersection_With_Source() {
+	@Test_intersectionWithSource() {
 		Venn.opts.printSource := true
 		res := Venn.doOperation(1, VennTest.FILE_A, VennTest.FILE_B)
 		this.assertEquals(res, 6)
@@ -147,7 +148,7 @@ class VennTest extends TestCase {
 				, ["(A) A", "(B) A", "(A) C", "(B) C", "(A) f", "(B) f"]))
 	}
 
-	@Test_Intersection_Unique() {
+	@Test_intersectionUnique() {
 		Venn.opts.unique := true
 		res := Venn.doOperation(1, VennTest.FILE_A, VennTest.FILE_B)
 		this.assertEquals(res, 3)
@@ -155,7 +156,7 @@ class VennTest extends TestCase {
 				, "cp1252"), ["A", "C", "f"]))
 	}
 
-	@Test_Intersection_Unique_Ignore_Case() {
+	@Test_intersectionUniqueIgnoreCase() {
 		Venn.opts.unique := true
 		Venn.opts.ignoreCase := true
 		res := Venn.doOperation(1, VennTest.FILE_A, VennTest.FILE_B
@@ -166,14 +167,14 @@ class VennTest extends TestCase {
 				, "cp1252"), ["A", "C", "f", "i"]))
 	}
 
-	@Test_Sym_Diff() {
+	@Test_symDiff() {
 		res := Venn.doOperation(3, VennTest.FILE_A, VennTest.FILE_B)
 		this.assertEquals(res, 7)
 		this.assertTrue(Arrays.equal(load_file_into_array(VennTest.FILE_RES
 				, "cp1252"), ["B", "D", "G", "H", "I", "e", "i"]))
 	}
 
-	@Test_Sym_Diff_Unique() {
+	@Test_symDiffUnique() {
 		Venn.opts.unique := true
 		res := Venn.doOperation(3, VennTest.FILE_A, VennTest.FILE_B)
 		this.assertEquals(res, 7)
@@ -181,7 +182,7 @@ class VennTest extends TestCase {
 				, "cp1252"), ["B", "D", "G", "H", "I", "e", "i"]))
 	}
 
-	@Test_Sym_Diff_Unique_Ignore_Case() {
+	@Test_symDiffUniqueIgnoreCase() {
 		Venn.opts.unique := true
 		Venn.opts.ignoreCase := true
 		res := Venn.doOperation(3, VennTest.FILE_A, VennTest.FILE_B)
@@ -190,21 +191,21 @@ class VennTest extends TestCase {
 				, "cp1252"), ["B", "D", "e", "G", "H"]))
 	}
 
-	@Test_Rel_CompAB() {
+	@Test_relCompAB() {
 		res := Venn.doOperation(4, VennTest.FILE_A, VennTest.FILE_B)
 		this.assertEquals(res, 3)
 		this.assertTrue(Arrays.equal(load_file_into_array(VennTest.FILE_RES
 				, "cp1252"), ["B", "H", "i"]))
 	}
 
-	@Test_Rel_CompBA() {
+	@Test_relCompBA() {
 		res := Venn.doOperation(4, VennTest.FILE_B, VennTest.FILE_A)
 		this.assertEquals(res, 4)
 		this.assertTrue(Arrays.equal(load_file_into_array(VennTest.FILE_RES
 				, "cp1252"), ["D", "G", "I", "e"]))
 	}
 
-	@Test_Rel_Comp_UniqueAB() {
+	@Test_relCompUniqueAB() {
 		Venn.opts.unique := true
 		res := Venn.doOperation(4, VennTest.FILE_A, VennTest.FILE_B)
 		this.assertEquals(res, 3)
@@ -212,7 +213,7 @@ class VennTest extends TestCase {
 				, "cp1252"), ["B", "H", "i"]))
 	}
 
-	@Test_Rel_Comp_UniqueBA() {
+	@Test_relCompUniqueBA() {
 		Venn.opts.unique := true
 		res := Venn.doOperation(4, VennTest.FILE_B, VennTest.FILE_A)
 		this.assertEquals(res, 4)
@@ -220,7 +221,7 @@ class VennTest extends TestCase {
 				, "cp1252"), ["D", "G", "I", "e"]))
 	}
 
-	@Test_Rel_Comp_Unique_Ignore_CaseAB() {
+	@Test_relCompUniqueIgnoreCaseAB() {
 		Venn.opts.unique := true
 		Venn.opts.ignoreCase := true
 		res := Venn.doOperation(4, VennTest.FILE_A, VennTest.FILE_B)
@@ -229,7 +230,7 @@ class VennTest extends TestCase {
 				, "cp1252"), ["B", "H"]))
 	}
 
-	@Test_Rel_Comp_Unique_Ignore_CaseBA() {
+	@Test_relCompUniqueIgnoreCaseBA() {
 		Venn.opts.unique := true
 		Venn.opts.ignoreCase := true
 		res := Venn.doOperation(4, VennTest.FILE_B, VennTest.FILE_A)
@@ -238,7 +239,7 @@ class VennTest extends TestCase {
 				, "cp1252"), ["D", "e", "G"]))
 	}
 
-	@Test_Portal_Abrechnung() {
+	@Test_portalAbrechnung() {
 		if (FileExist(A_Temp "\blacklist.txt")) {
 			FileDelete, % A_Temp "\blacklist.txt"
 		}
@@ -267,7 +268,7 @@ class VennTest extends TestCase {
 				, "cp1252"), ["BChr", "heap", "zahl"]))
 	}
 
-	@Test_Portal_AbrechnungStelle2() {
+	@Test_portalAbrechnungStelle2() {
 		if (FileExist(A_Temp "\blacklist.txt")) {
 			FileDelete, % A_Temp "\blacklist.txt"
 		}
@@ -297,21 +298,21 @@ class VennTest extends TestCase {
 				, "cp1252"), ["BChr", "heap", "zahl"]))
 	}
 
-	@Test_Usage() {
+	@Test_usage() {
 		this.assertEquals(Venn.run(["-h"]), 0)
 		Ansi.flush()
 		this.assertEquals(TestCase.fileContent(VennTest.FILE_CON)
 				, TestCase.fileContent(A_ScriptDir "\figures\Usage.txt"))
 	}
 
-	@Test_VersionInfo() {
+	@Test_versionInfo() {
 		this.assertEquals(Venn.run(["--version"]), 0)
 		Ansi.flush()
 		this.assertTrue(RegExMatch(TestCase.fileContent(VennTest.FILE_CON)
 				, "AHK venn version v0\.0\.0/.*"))
 	}
 
-	@Test_Example1() {
+	@Test_example1() {
 		this.assertEquals(Venn.run(["-s", "--operation", "un", "-A"
 				, VennTest.FILE_A, "-B", VennTest.FILE_B]), 13)
 		Ansi.flush()
@@ -320,7 +321,7 @@ class VennTest extends TestCase {
 				. "\figures\UnionWithSource.txt"))
 	}
 
-	@Test_Example2() {
+	@Test_example2() {
 		if (FileExist(A_Temp "\venn-test.txt")) {
 			FileDelete %A_Temp%\venn-test.txt
 		}
@@ -336,7 +337,7 @@ class VennTest extends TestCase {
 		}
 	}
 
-	@Test_Example3() {
+	@Test_example3() {
 		this.assertEquals(Venn.run(["--operation", "un", "-lu"
 				, "-A", VennTest.FILE_A, "-B", VennTest.FILE_B]), 10)
 		Ansi.flush()
@@ -344,7 +345,7 @@ class VennTest extends TestCase {
 				, TestCase.fileContent(A_ScriptDir "\figures\UniqueUnion.txt"))
 	}
 
-	@Test_Example4() {
+	@Test_example4() {
 		this.assertEquals(Venn.run(["--operation", "un", "-tu"
 				, "-A", VennTest.FILE_A, "-B", VennTest.FILE_B]), 10)
 		Ansi.flush()
@@ -352,7 +353,7 @@ class VennTest extends TestCase {
 				, TestCase.fileContent(A_ScriptDir "\figures\UniqueUnion.txt"))
 	}
 
-	@Test_Example5() {
+	@Test_example5() {
 		this.assertEquals(Venn.run(["--operation", "un", "-auv"
 				, "-A", VennTest.FILE_A, "-B", VennTest.FILE_B]), 9)
 		Ansi.flush()
@@ -361,7 +362,7 @@ class VennTest extends TestCase {
 				. "\figures\UniqueUnionIgnoreAll.txt"))
 	}
 
-	@Test_Example6() {
+	@Test_example6() {
 		if (FileExist(A_Temp "\venn-test.txt")) {
 			FileDelete %A_Temp%\venn-test.txt
 		}
@@ -382,7 +383,7 @@ class VennTest extends TestCase {
 		}
 	}
 
-	@Test_ErrorHandling() {
+	@Test_errorHandling() {
 		this.assertEquals(Venn.run(["-A"]), 0)
 		this.assertEquals(Venn.run(["-A", VennTest.FILE_A, "-B"]), 0)
 		this.assertEquals(Venn.run(["--operation"]), 0)
