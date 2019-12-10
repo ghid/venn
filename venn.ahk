@@ -304,16 +304,11 @@ operation_cb(operation, noOption="") {
 }
 
 #NoEnv ; notest-begin
+#Warn All, StdOut
 SetBatchLines -1
 
 #Include <app>
-#Include <ansi>
-#Include <console>
-#Include <math>
-#Include <arrays>
-#Include <optparser>
-#Include <object>
+#Include <cui-libs>
 #Include <system>
-#Include <string>
 
 exitapp App.checkRequiredClasses(Venn).run(A_Args) ; notest-end

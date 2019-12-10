@@ -3,8 +3,8 @@
 #Warn All, StdOut
 SetBatchLines -1
 
-#Include <testcase-libs>
 #Include <app>
+#Include <testcase-libs>
 
 class VennTest extends TestCase {
 
