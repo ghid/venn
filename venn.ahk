@@ -15,7 +15,6 @@ class Venn {
 	setDefaults() {
 		dv := { ignoreAll: false
 				, ignoreBlankLines: true
-				, compare_at: 1
 				, encodingOfFileA: "cp1252"
 				, encodingOfFileB: "cp1252"
 				, help: false
@@ -145,7 +144,6 @@ class Venn {
 		return Venn.opts.count
 	}
 
-	; TODO: Refactor!
 	cli() {
 		op := new OptParser("venn [options] "
 				. "--operation=< is | un | sd | rc > -A <file> -B <file>")
@@ -210,7 +208,7 @@ class Venn {
 		return op
 	}
 
-	; TODO: Refactor!
+	; @todo: Refactor!
 	run(args) {
 		Venn.setDefaults()
 		returnCode := 0
@@ -290,17 +288,11 @@ class Venn {
 }
 
 operation_cb(operation, noOption="") {
-	if (operation = "is") {
-		return 1
-	} else if (operation = "un") {
-		return 2
-	} else if (operation = "sd") {
-		return 3
-	} else if (operation = "rc") {
-		return 4
-	} else {
+	static Operations := {is: 1, un: 2, sd: 3, rc: 4}
+	if (!Operations.hasKey(operation)) {
 		throw Exception("Invalid operation: " operation)
 	}
+	return Operations[operation]
 }
 
 #NoEnv ; notest-begin
