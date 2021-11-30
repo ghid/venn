@@ -1,4 +1,4 @@
-; ahk: console
+﻿; ahk: console
 #NoEnv
 #Warn All, StdOut
 SetBatchLines -1
@@ -291,7 +291,7 @@ class VennTest extends TestCase {
 			), % A_Temp "\users.txt"
 		Venn.opts.unique := true
 		Venn.opts.ignoreAll := true
-		Venn.opts.compare_at := 2
+		Venn.opts.compare_at := 1
 		res := Venn.doOperation(4, A_Temp "\users.txt", A_Temp "\blacklist.txt")
 		this.assertEquals(res, 3)
 		this.assertTrue(Arrays.equal(load_file_into_array(VennTest.FILE_RES

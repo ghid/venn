@@ -1,4 +1,4 @@
-; ahk: console
+﻿;@Ahk2Exe-ConsoleApp
 class Venn {
 
 	requires() {
@@ -39,6 +39,7 @@ class Venn {
 		Venn.handleIgnoreAll()
 		A := Venn.loadFileIntoArray(fileA, Venn.opts.encodingOfFileA)
 		B := Venn.loadFileIntoArray(fileB, Venn.opts.encodingOfFileB)
+		count := 0
 		try {
 			Venn.handleOutput()
 			switch operation {
@@ -59,7 +60,6 @@ class Venn {
 						, Venn.handleIgnoreCase(), Venn.opts.printSource)
 						.result()
 			}
-			count := 0
 			while (A_Index <= resultSet.maxIndex()) {
 				count := Venn.output(resultSet[A_Index])
 			}
@@ -92,8 +92,7 @@ class Venn {
 		aString := Format("{:U}", aString) "$"
 		anotherString := Format("{:U}", anotherString) "$"
 		return (aString == anotherString ? 0
-				: aString > anotherString ? +1
-				: -1)
+				: aString > anotherString ? +1 : -1)
 	}
 
 	handleOutput() {
@@ -128,20 +127,24 @@ class Venn {
 	}
 
 	output(currentValue) {
-		static previousValue = ""
-		if (Venn.opts.unique && (Venn.opts.ignoreCase = true
-				? (currentValue = previousValue)
-				: (currentValue == previousValue))) {
-		} else {
+		if (!(Venn.opts.unique && Venn.isSameValueAsPrevious(currentValue))) {
 			if (Venn.opts.output != "") {
 				Venn.opts.output_file.writeLine(currentValue)
 			} else {
 				Ansi.writeLine(currentValue)
 			}
-			previousValue := currentValue
 			Venn.opts.count++
 		}
 		return Venn.opts.count
+	}
+
+	isSameValueAsPrevious(currentValue) {
+		static previousValue := ""
+		result := (Venn.opts.ignoreCase = true
+				? currentValue = previousValue
+				: currentValue == previousValue)
+		previousValue := currentValue
+		return result
 	}
 
 	cli() {
