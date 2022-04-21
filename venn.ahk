@@ -1,4 +1,4 @@
-; ahk: console
+﻿;@Ahk2Exe-ConsoleApp
 class Venn {
 
     requires() {
@@ -13,55 +13,53 @@ class Venn {
             , "'Relative Complement' A:(*( ) ):B" ]
 
     setDefaults() {
-        dv := { a: false
-                , b: true
-                , compare_at: 1
-                , enc_A: "cp1252"
-                , enc_B: "cp1252"
-                , h: false
-                , i: -1
-                , k: false
-                , l: -1
-                , op: ""
+        dv := { ignoreAll: false
+                , ignoreBlankLines: true
+                , encodingOfFileA: "cp1252"
+                , encodingOfFileB: "cp1252"
+                , help: false
+                , ignoreCase: -1
+                , keepFile: false
+                , ignoreLeadingSpaces: -1
+                , operation: ""
                 , output: false
                 , output_file: ""
-                , s: false
-                , set_A: ""
-                , set_B: ""
-                , t: -1
-                , u: false
-                , v: false
+                , printSource: false
+                , setA: ""
+                , setB: ""
+                , ignoreTrailingSpaces: -1
+                , unique: false
+                , verboseOutput: false
                 , version: false
                 , count: 0}
-
         Venn.opts := dv
     }
 
-    loadFileIntoArray(fileName, encoding="utf-8") {
-        FileGetSize sizeOfInputFileInBytes, %fileName%
-        inputFile := FileOpen(fileName, "r`n", encoding)
-        contentOfInputFile := inputFile.read(sizeOfInputFileInBytes)
-        inputFile.close()
-        sortOption := (Venn.opts.i = true ? "" : "C")
-        Sort contentOfInputFile, %sortOption%
-        target := []
-        loop Parse, contentOfInputFile, % "`n", % Chr(26)  ; NOWARN
-        {
-            if (!Venn.opts.b || A_LoopField.trimAll() != "") {
-                target.push(A_LoopField)
-            }
-        }
-        return target
-    }
-
-    doOperation(op, fileA, fileB, compareAsType=0) {
+    doOperation(operation, fileA, fileB, compareAsType=0) {
         Venn.handleIgnoreAll()
-        A := Venn.loadFileIntoArray(fileA, Venn.opts.enc_A)
-        B := Venn.loadFileIntoArray(fileB, Venn.opts.enc_B)
+        A := Venn.loadFileIntoArray(fileA, Venn.opts.encodingOfFileA)
+        B := Venn.loadFileIntoArray(fileB, Venn.opts.encodingOfFileB)
+        count := 0
         try {
-            VennData.includeSource := Venn.opts.s
             Venn.handleOutput()
-            resultSet := Arrays.venn(A, B, op, Venn.handleIgnoreCase())
+            switch operation {
+            case 1:
+                resultSet := new Arrays.Intersection(A, B
+                        , Venn.handleIgnoreCase(), Venn.opts.printSource)
+                        .result()
+            case 2:
+                resultSet := new Arrays.Union(A, B
+                        , Venn.handleIgnoreCase(), Venn.opts.printSource)
+                        .result()
+            case 3:
+                resultSet := new Arrays.SymmetricDifference(A, B
+                        , Venn.handleIgnoreCase(), Venn.opts.printSource)
+                        .result()
+            case 4:
+                resultSet := new Arrays.RelativeComplement(A, B
+                        , Venn.handleIgnoreCase(), Venn.opts.printSource)
+                        .result()
+            }
             while (A_Index <= resultSet.maxIndex()) {
                 count := Venn.output(resultSet[A_Index])
             }
@@ -73,9 +71,33 @@ class Venn {
         return count
     }
 
+    loadFileIntoArray(fileName, encoding="utf-8") {
+        FileGetSize sizeOfInputFileInBytes, %fileName%
+        inputFile := FileOpen(fileName, "r`n", encoding)
+        contentOfInputFile := inputFile.read(sizeOfInputFileInBytes)
+        inputFile.close()
+        sortOption := (Venn.opts.ignoreCase = true ? "" : "C")
+        Sort contentOfInputFile, %sortOption%
+        target := []
+        loop Parse, contentOfInputFile, % "`n", % Chr(26)  ; NOWARN
+        {
+            if (!Venn.opts.ignoreBlankLines || A_LoopField.trimAll() != "") {
+                target.push(A_LoopField)
+            }
+        }
+        return target
+    }
+
+    compareIgnoreCase(aString, anotherString) {
+        aString := Format("{:U}", aString) "$"
+        anotherString := Format("{:U}", anotherString) "$"
+        return (aString == anotherString ? 0
+                : aString > anotherString ? +1 : -1)
+    }
+
     handleOutput() {
         if (Venn.opts.output != "") {
-            if (Venn.opts.k) {
+            if (Venn.opts.keepFile) {
                 Venn.opts.output_file := FileOpen(Venn.opts.output, "a")
             } else {
                 Venn.opts.output_file := FileOpen(Venn.opts.output, "w")
@@ -84,92 +106,94 @@ class Venn {
     }
 
     handleIgnoreCase() {
-        if (Venn.opts.i == true) {
-            return String.COMPARE_AS_STRING
-        } else {
-            return String.COMPARE_AS_CASE_SENSITIVE_STRING
+        if (Venn.opts.ignoreCase == true) {
+            return Venn.compareIgnoreCase.bind(Venn)
         }
+        return ""
     }
 
     handleIgnoreAll() {
-        if (Venn.opts.a) {
-            if (Venn.opts.i != 0) {
-                Venn.opts.i := true
+        if (Venn.opts.ignoreAll) {
+            if (Venn.opts.ignoreCase != 0) {
+                Venn.opts.ignoreCase := true
             }
-            if (Venn.opts.l != 0) {
-                Venn.opts.l := true
+            if (Venn.opts.ignoreLeadingSpaces != 0) {
+                Venn.opts.ignoreLeadingSpaces := true
             }
-            if (Venn.opts.t != 0) {
-                Venn.opts.t := true
+            if (Venn.opts.ignoreTrailingSpaces != 0) {
+                Venn.opts.ignoreTrailingSpaces := true
             }
         }
     }
 
-    output(value) {
-        static last_value = ""
-
-        if (Venn.opts.u && (Venn.opts.i = true
-                ? (value = last_value)
-                : (value == last_value))) {
-        } else {
+    output(currentValue) {
+        if (!(Venn.opts.unique && Venn.isSameValueAsPrevious(currentValue))) {
             if (Venn.opts.output != "") {
-                Venn.opts.output_file.writeLine(value)
+                Venn.opts.output_file.writeLine(currentValue)
             } else {
-                Ansi.write(value "`n")
+                Ansi.writeLine(currentValue)
             }
-            last_value := value
             Venn.opts.count++
         }
         return Venn.opts.count
     }
 
-    ; TODO: Refactor!
+    isSameValueAsPrevious(currentValue) {
+        static previousValue := ""
+        result := (Venn.opts.ignoreCase = true
+                ? currentValue = previousValue
+                : currentValue == previousValue)
+        previousValue := currentValue
+        return result
+    }
+
     cli() {
         op := new OptParser("venn [options] "
                 . "--operation=< is | un | sd | rc > -A <file> -B <file>")
         op.add(new OptParser.Group("General options"))
         op.add(new OptParser.Boolean("h", "help", Venn.opts
-                , "h", "This help"
+                , "help", "This help"
                 , OptParser.OPT_HIDDEN))
-        op.add(new OptParser.Boolean("a", "ignore-all", Venn.opts
-                , "a", "Ignore leading and trailing spaces`; ignore case"
+        op.add(new OptParser.Boolean("a", "ignore-all"
+                , Venn.opts, "ignoreAll"
+                , "Ignore leading and trailing spaces`; ignore case"
                 ,, false))
         op.add(new OptParser.Boolean("i", "ignore-case", Venn.opts
-                , "i", "Ignore case"
+                , "ignoreCase", "Ignore case"
                 , OptParser.OPT_NEG, -1))
         op.add(new OptParser.Boolean("l", "ignore-leading-spaces", Venn.opts
-                , "l", "Ignore leading spaces"
+                , "ignoreLeadingSpaces", "Ignore leading spaces"
                 , OptParser.OPT_NEG, -1))
         op.add(new OptParser.Boolean("t", "ignore-trailing-spaces", Venn.opts
-                , "t", "Ignore trailing spaces"
+                , "ignoreTrailingSpaces", "Ignore trailing spaces"
                 , OptParser.OPT_NEG, -1))
         op.add(new OptParser.Boolean("b", "ignore-blank-lines", Venn.opts
-                , "b", "Ignore blank line (default)"
+                , "ignoreBlankLines", "Ignore blank line (default)"
                 , OptParser.OPT_NEG, true))
         op.add(new OptParser.Boolean("u", "unique", Venn.opts
-                , "u", "Only keep the first of multiple identical lines"))
+                , "unique", "Only keep the first of multiple identical lines"))
         op.add(new OptParser.Boolean("s", "source", Venn.opts
-                , "s", "Print source (A/B) in results"))
+                , "printSource", "Print source (A/B) in results"))
         op.add(new OptParser.Boolean("v", "verbose", Venn.opts
-                , "v", "Verbose output"))
+                , "verboseOutput", "Verbose output"))
         op.add(new OptParser.Boolean(0, "version", Venn.opts
                 , "version", "Version info"))
         op.add(new OptParser.String(0, "enc-A", Venn.opts
-                , "enc_A", "encoding", "Encoding of file A"
-                , OptParser.OPT_ARG,, Venn.opts.enc_A))
+                , "encodingOfFileA", "encoding", "Encoding of file A"
+                , OptParser.OPT_ARG,, Venn.opts.encodingOfFileA))
         op.add(new OptParser.String(0, "enc-B", Venn.opts
-                , "enc_B", "encoding", "Encoding fo file B"
-                , OptParser.OPT_ARG,, Venn.opts.enc_B))
+                , "encodingOfFileB", "encoding", "Encoding fo file B"
+                , OptParser.OPT_ARG,, Venn.opts.encodingOfFileB))
         op.add(new Optparser.Group("`nSets"))
         op.add(new OptParser.String("A", "", Venn.opts
-                , "set_A", "file", "File name to use as set A"
+                , "setA", "file", "File name to use as set A"
                 , OptParser.OPT_ARG))
         op.add(new OptParser.String("B", "", Venn.opts
-                , "set_B", "file", "File name to use as set B"
+                , "setB", "file", "File name to use as set B"
                 , OptParser.OPT_ARG))
         op.add(new OptParser.Group("`nOperations"))
         op.add(new OptParser.Callback(0, "operation", Venn.opts
-                , "op", "operation_cb", "operation"
+                , "operation", "operation_cb", "operation"
                 , [ "Select an operation to perform"
                 . " (the '*' represents the result set):"
                 , ". is: " Venn.OP_NAME[1]
@@ -182,11 +206,12 @@ class Venn {
                 , "output", "file", "Write matching lines to file"
                 , OptParser.OPT_ARG))
         op.add(new OptParser.Boolean(0, "keep-file", Venn.opts
-                , "k", "Append to file instead of overwriting it"
+                , "keepFile", "Append to file instead of overwriting it"
                 , false))
         return op
     }
 
+    ; @todo: Refactor!
     run(args) {
         Venn.setDefaults()
         returnCode := 0
@@ -197,49 +222,49 @@ class Venn {
                 throw Exception("error: Invalid argument(s): "
                         . Arrays.toString(args, "; "))
             }
-            if (Venn.opts.h) {
+            if (Venn.opts.help) {
                 Ansi.writeLine(op.usage())
             } else if (Venn.opts.version) {
-                global G_VERSION_INFO
-                Ansi.writeLine(G_VERSION_INFO.NAME
-                        . "/" G_VERSION_INFO.ARCH
-                        . "-" G_VERSION_INFO.BUILD)
+                Ansi.writeLine(Version.Info)
             } else {
-                if (!FileExist(Venn.opts.set_A)) {
+                if (!FileExist(Venn.opts.setA)) {
                     throw Exception("error: Argument -A is an invalid file "
                             . "or missing")
                 }
-                if (!FileExist(Venn.opts.set_B)) {
+                if (!FileExist(Venn.opts.setB)) {
                     throw Exception("error: Argument -B is an invalid file "
                             . "or missing")
                 }
                 Venn.opts.output := Venn.opts.output.trimAll()
-                if (Venn.opts.v) {
-                    if (Venn.opts.i = true || Venn.opts.a = true) {
+                if (Venn.opts.verboseOutput) {
+                    if (Venn.opts.ignoreCase = true
+                            || Venn.opts.ignoreAll = true) {
                         Ansi.write("Ignoring case`n")
                     } else {
                         Ansi.write("Case sensitive`n")
                     }
-                    if (Venn.opts.l = true || Venn.opts.a = true) {
+                    if (Venn.opts.ignoreLeadingSpaces = true
+                            || Venn.opts.ignoreAll = true) {
                         Ansi.write("Ignoring leading spaces`n")
                     }
-                    if (Venn.opts.t = true || Venn.opts.a = true) {
+                    if (Venn.opts.ignoreTrailingSpaces = true
+                            || Venn.opts.ignoreAll = true) {
                         Ansi.write("Ignoring trailing spaces`n")
                     }
-                    if (Venn.opts.b) {
+                    if (Venn.opts.ignoreBlankLines) {
                         Ansi.write("Ignoring blank lines`n")
                     }
-                    if (Venn.opts.u) {
+                    if (Venn.opts.unique) {
                         Ansi.write("Printing no duplicates`n")
                     }
-                    Ansi.write("Set 'A' is " Venn.opts.set_A
-                            . " with encoding " Venn.opts.enc_A "`n")
-                    Ansi.write("Set 'B' is " Venn.opts.set_B
-                            . " with encoding " Venn.opts.enc_B "`n")
+                    Ansi.write("Set 'A' is " Venn.opts.setA
+                            . " with encoding " Venn.opts.encodingOfFileA "`n")
+                    Ansi.write("Set 'B' is " Venn.opts.setB
+                            . " with encoding " Venn.opts.encodingOfFileB "`n")
                     Ansi.write("Performing operation "
-                            . Venn.OP_NAME[Venn.opts.op] "`n")
+                            . Venn.OP_NAME[Venn.opts.operation] "`n")
                     if (Venn.opts.output.trimAll() != "") {
-                        if (Venn.opts.k) {
+                        if (Venn.opts.keepFile) {
                             Ansi.write("Appending to file "
                                     . Venn.opts.output "`n")
                         } else {
@@ -248,9 +273,8 @@ class Venn {
                         }
                     }
                 }
-                VennData.includeSource := Venn.opts.s
-                returnCode := Venn.doOperation(Venn.opts.op
-                        , Venn.opts.set_A, Venn.opts.set_B)
+                returnCode := Venn.doOperation(Venn.opts.operation
+                        , Venn.opts.setA, Venn.opts.setB)
             }
         } catch _ex {
             Ansi.write(_ex.message "`n")
@@ -261,33 +285,20 @@ class Venn {
 }
 
 operation_cb(operation, noOption="") {
-    if (operation = "is") {
-        return 1
-    } else if (operation = "un") {
-        return 2
-    } else if (operation = "sd") {
-        return 3
-    } else if (operation = "rc") {
-        return 4
-    } else {
+    static Operations := {is: 1, un: 2, sd: 3, rc: 4}
+    if (!Operations.hasKey(operation)) {
         throw Exception("Invalid operation: " operation)
     }
+    return Operations[operation]
 }
 
 #NoEnv ; notest-begin
+#Warn All, StdOut
 SetBatchLines -1
 
 #Include <app>
-#Include <ansi>
-#Include <console>
-#Include <math>
-#Include <arrays>
-#Include <optparser>
-#Include <object>
+#Include <cui-libs>
 #Include <system>
-#Include <string>
 #Include *i %A_ScriptDir%\.versioninfo
 
-main:
-    App.checkRequiredClasses(Venn)
-exitapp Venn.run(A_Args) ; notest-end
+exitapp App.checkRequiredClasses(Venn).run(A_Args) ; notest-end

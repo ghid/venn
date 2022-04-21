@@ -3,9 +3,9 @@ Ignoring leading spaces
 Ignoring trailing spaces
 Ignoring blank lines
 Printing no duplicates
-Set 'A' is C:\Users\srp\AppData\Local\Temp\venn_A.txt with encoding cp1252
-Set 'B' is C:\Users\srp\AppData\Local\Temp\venn_B.txt with encoding cp1252
-Performing operation 'Union' A:(*(*)*):B
+Set 'A' is [\w\W]+?\\venn_A.txt with encoding cp1252
+Set 'B' is [\w\W]+?\\venn_B.txt with encoding cp1252
+Performing operation 'Union' A:\Q(*(*)*)\E:B
 A
 B
 C

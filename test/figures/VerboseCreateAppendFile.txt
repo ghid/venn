@@ -1,13 +1,13 @@
 Case sensitive
 Ignoring blank lines
-Set 'A' is C:\Users\srp\AppData\Local\Temp\venn_A.txt with encoding cp1252
-Set 'B' is C:\Users\srp\AppData\Local\Temp\venn_B.txt with encoding cp1252
-Performing operation 'Union' A:(*(*)*):B
-Overwrting file C:\Users\srp\AppData\Local\Temp\venn-test.txt
+Set 'A' is [\w\W]+?\\venn_A.txt with encoding cp1252
+Set 'B' is [\w\W]+?\\venn_B.txt with encoding cp1252
+Performing operation 'Union' A:\Q(*(*)*)\E:B
+Overwrting file [\w\W]+?\\venn-test.txt
 Case sensitive
 Ignoring blank lines
 Printing no duplicates
-Set 'A' is C:\Users\srp\AppData\Local\Temp\venn_A.txt with encoding cp1252
-Set 'B' is C:\Users\srp\AppData\Local\Temp\venn_B.txt with encoding cp1252
-Performing operation 'Union' A:(*(*)*):B
-Appending to file C:\Users\srp\AppData\Local\Temp\venn-test.txt
+Set 'A' is [\w\W]+?\\venn_A.txt with encoding cp1252
+Set 'B' is [\w\W]+?\\venn_B.txt with encoding cp1252
+Performing operation 'Union' A:\Q(*(*)*)\E:B
+Appending to file [\w\W]+?\\venn-test.txt
